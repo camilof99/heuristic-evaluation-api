@@ -20,4 +20,5 @@ FROM alpine:latest as production
 RUN apk --no-cache add nodejs ca-certificates
 WORKDIR /root/
 COPY --from=builder /usr/src/app ./
+RUN ls -l /root/build/
 CMD [ "node", "./build/index.js" ]
