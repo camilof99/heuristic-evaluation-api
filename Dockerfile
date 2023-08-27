@@ -20,4 +20,4 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/src ./src
 # Add this line only if 'build' directory needs to be copied
 # COPY --from=builder /usr/src/app/build ./build
-CMD [ "node", "./build/index.js" ]
+CMD [ "node", "./build/server.js" ]
