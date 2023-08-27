@@ -220,6 +220,8 @@ app.get("/api/evaluationresults/:idProject", async (req, res) => {
     });
 });
 
-app.listen(3000, () => {
-    console.log("Servidor corriendo en el puerto 3000");
+const port = process.env.PORT ?? 8080;
+
+app.listen(port, () => {
+    console.log(`App listening on port ${port}`);
 });
