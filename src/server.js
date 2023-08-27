@@ -9,9 +9,9 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connection = mysql.createConnection({
-    host: "localhost",
+    host: "34.133.192.54",
     user: "root",
-    password: "",
+    password: "@cafaza99",
     database: "heuristic_evaluation_bd",
 });
 
