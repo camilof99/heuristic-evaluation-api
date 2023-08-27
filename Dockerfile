@@ -18,6 +18,5 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/src ./src
-# Add this line only if 'build' directory needs to be copied
-# COPY --from=builder /usr/src/app/build ./build
-CMD [ "node", "./build/server.js" ]
+CMD [ "node", "./src/server.js" ]  # Use the correct path to server.js
+
