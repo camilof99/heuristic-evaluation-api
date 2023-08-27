@@ -9,16 +9,14 @@ CMD [ "npm", "run", "start:dev" ]
 # Builder stage
 FROM development as builder
 WORKDIR /usr/src/app
-# Build the app with devDependencies still installed from "development" stage
-RUN npm run build
-# Clear dependencies and reinstall for production (no devDependencies)
-RUN rm -rf node_modules
-RUN npm ci --only=production
+# Add a build script if needed (e.g., compiling TypeScript, generating files)
+# RUN npm run build
 
 # Production stage
-FROM alpine:latest as production
-RUN apk --no-cache add nodejs ca-certificates
-WORKDIR /root/
-COPY --from=builder /usr/src/app ./
-RUN ls -l /root/build/
+FROM node:16-alpine as production
+WORKDIR /usr/src/app
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/src ./src
+COPY --from=builder /usr/src/app/build ./build
 CMD [ "node", "./build/index.js" ]
