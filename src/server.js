@@ -13,6 +13,7 @@ const connection = mysql.createConnection({
     user: "root",
     password: "@cafaza99",
     database: "heuristic_evaluation_bd",
+    connectTimeout: 10000,
 });
 
 connection.connect((error) => {
