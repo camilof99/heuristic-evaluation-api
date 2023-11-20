@@ -153,58 +153,57 @@ app.get("/api/heuristics", async (req, res) => {
 app.post("/api/evaluate", async (req, res) => {
     const { ratings, idProject } = req.body;
 
-    const client = await pool.connect();
-    try {
-        await client.query("BEGIN");
+    for (const key in ratings) {
+        if (ratings.hasOwnProperty(key)) {
+            const rating = ratings[key];
+            const idHeuristic = rating.idHeuristic;
+            const ratingValue = rating.rating;
 
-        for (const key in ratings) {
-            if (ratings.hasOwnProperty(key)) {
-                const rating = ratings[key];
-                const idHeuristic = rating.idHeuristic;
-                const ratingValue = rating.rating;
+            const datos = {
+                valoration: ratingValue,
+                id_project: idProject,
+                id_heuristic: idHeuristic,
+                id_criteria: key,
+            };
 
-                const datos = {
-                    valoration: ratingValue,
-                    id_project: idProject,
-                    id_heuristic: idHeuristic,
-                    id_criteria: key,
-                };
+            const selectQuery =
+                "SELECT * FROM evaluation WHERE id_project = ? AND id_heuristic = ? AND id_criteria = ?";
 
-                const selectQuery =
-                    "SELECT * FROM evaluation WHERE id_project = $1 AND id_heuristic = $2 AND id_criteria = $3";
+            const query = "INSERT INTO evaluation SET ?";
 
-                const selectResults = await client.query(selectQuery, [
-                    datos.id_project,
-                    datos.id_heuristic,
-                    datos.id_criteria,
-                ]);
+            client.query(
+                selectQuery,
+                [datos.id_project, datos.id_heuristic, datos.id_criteria],
+                (error, results) => {
+                    if (error) {
+                        console.error(
+                            "Error al verificar los |datos existentes:",
+                            error
+                        );
+                        return;
+                    }
 
-                if (selectResults.rows.length > 0) {
-                    console.log(
-                        "Ya existe un registro con los mismos valores."
-                    );
-                } else {
-                    const insertQuery =
-                        "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1, $2, $3, $4)";
-                    await client.query(insertQuery, [
-                        datos.valoration,
-                        datos.id_project,
-                        datos.id_heuristic,
-                        datos.id_criteria,
-                    ]);
-                    console.log("Datos insertados correctamente.");
+                    if (results.length > 0) {
+                        console.log(
+                            "Ya existe un registro con los mismos valores."
+                        );
+                        return;
+                    }
+
+                    const insertQuery = "INSERT INTO evaluation SET ?";
+                    client.query(insertQuery, datos, (error, results) => {
+                        if (error) {
+                            console.error(
+                                "Error al insertar los datos:",
+                                error
+                            );
+                        } else {
+                            console.log("Datos insertados correctamente.");
+                        }
+                    });
                 }
-            }
+            );
         }
-
-        await client.query("COMMIT");
-        res.status(200).json({ message: "Evaluaciones realizadas con éxito." });
-    } catch (error) {
-        await client.query("ROLLBACK");
-        console.error("Error al evaluar:", error);
-        res.status(500).json({ error: "Error al evaluar." });
-    } finally {
-        client.release();
     }
 });
 
