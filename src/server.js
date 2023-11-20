@@ -61,29 +61,29 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/projects", async (req, res) => {
     const query = "SELECT * FROM projects";
 
-    connection.query(query, (error, results) => {
+    client.query(query, (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
 
 app.get("/api/projects/:id", async (req, res) => {
     const projectId = req.params.id;
-    const query = "SELECT * FROM projects WHERE id = ?";
+    const query = "SELECT * FROM projects WHERE id = $1";
 
-    connection.query(query, [projectId], (error, results) => {
+    client.query(query, [projectId], (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
 
@@ -91,132 +91,136 @@ app.post("/api/createProject", async (req, res) => {
     const projectInfo = req.body;
     console.log(projectInfo);
 
-    const query = "INSERT INTO projects SET ?";
+    const query = "INSERT INTO projects (column1, column2, ...) VALUES ($1, $2, ...) RETURNING *";
 
-    connection.query(query, [projectInfo], (error, results) => {
+    client.query(query, [projectInfo.column1, projectInfo.column2, ...], (error, results) => {
         if (error) {
             console.error("Error al insertar los datos de la tabla:", error);
             res.status(500).json({ error: "Error al insertar los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
 
-app.get("/api/coordinators", async (req, res) => {
-    const query = "SELECT * FROM users where rol = 'coordinator'";
 
-    connection.query(query, (error, results) => {
+app.get("/api/coordinators", async (req, res) => {
+    const query = "SELECT * FROM users WHERE rol = 'coordinator'";
+
+    client.query(query, (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
 
 app.get("/api/evaluators", async (req, res) => {
-    const query = "SELECT * FROM users where rol = 'evaluator'";
+    const query = "SELECT * FROM users WHERE rol = 'evaluator'";
 
-    connection.query(query, (error, results) => {
+    client.query(query, (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
+
 
 app.get("/api/heuristics", async (req, res) => {
-    const projectId = req.params.id;
     const query =
-        "SELECT c.*, (h.description) heuristic FROM criteria c, heuristics h WHERE c.id_heuristic = h.id;";
+        "SELECT c.*, h.description AS heuristic FROM criteria c JOIN heuristics h ON c.id_heuristic = h.id";
 
-    connection.query(query, [projectId], (error, results) => {
+    client.query(query, (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
+
 
 app.post("/api/evaluate", async (req, res) => {
     const { ratings, idProject } = req.body;
 
-    for (const key in ratings) {
-        if (ratings.hasOwnProperty(key)) {
-            const rating = ratings[key];
-            const idHeuristic = rating.idHeuristic;
-            const ratingValue = rating.rating;
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
 
-            const datos = {
-                valoration: ratingValue,
-                id_project: idProject,
-                id_heuristic: idHeuristic,
-                id_criteria: key,
-            };
+        for (const key in ratings) {
+            if (ratings.hasOwnProperty(key)) {
+                const rating = ratings[key];
+                const idHeuristic = rating.idHeuristic;
+                const ratingValue = rating.rating;
 
-            const selectQuery =
-                "SELECT * FROM evaluation WHERE id_project = ? AND id_heuristic = ? AND id_criteria = ?";
+                const datos = {
+                    valoration: ratingValue,
+                    id_project: idProject,
+                    id_heuristic: idHeuristic,
+                    id_criteria: key,
+                };
 
-            const query = "INSERT INTO evaluation SET ?";
+                const selectQuery =
+                    "SELECT * FROM evaluation WHERE id_project = $1 AND id_heuristic = $2 AND id_criteria = $3";
 
-            connection.query(
-                selectQuery,
-                [datos.id_project, datos.id_heuristic, datos.id_criteria],
-                (error, results) => {
-                    if (error) {
-                        console.error(
-                            "Error al verificar los |datos existentes:",
-                            error
-                        );
-                        return;
-                    }
+                const selectResults = await client.query(selectQuery, [
+                    datos.id_project,
+                    datos.id_heuristic,
+                    datos.id_criteria,
+                ]);
 
-                    if (results.length > 0) {
-                        console.log(
-                            "Ya existe un registro con los mismos valores."
-                        );
-                        return;
-                    }
-
-                    const insertQuery = "INSERT INTO evaluation SET ?";
-                    connection.query(insertQuery, datos, (error, results) => {
-                        if (error) {
-                            console.error(
-                                "Error al insertar los datos:",
-                                error
-                            );
-                        } else {
-                            console.log("Datos insertados correctamente.");
-                        }
-                    });
+                if (selectResults.rows.length > 0) {
+                    console.log(
+                        "Ya existe un registro con los mismos valores."
+                    );
+                } else {
+                    const insertQuery =
+                        "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1, $2, $3, $4)";
+                    await client.query(insertQuery, [
+                        datos.valoration,
+                        datos.id_project,
+                        datos.id_heuristic,
+                        datos.id_criteria,
+                    ]);
+                    console.log("Datos insertados correctamente.");
                 }
-            );
+            }
         }
+
+        await client.query("COMMIT");
+        res.status(200).json({ message: "Evaluaciones realizadas con éxito." });
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("Error al evaluar:", error);
+        res.status(500).json({ error: "Error al evaluar." });
+    } finally {
+        client.release();
     }
 });
 
+
 app.get("/api/evaluationresults/:idProject", async (req, res) => {
     const idProject = req.params.idProject;
-    const query = "SELECT * FROM evaluation WHERE id_project = ?";
+    const query = "SELECT * FROM evaluation WHERE id_project = $1";
 
-    connection.query(query, [idProject], (error, results) => {
+    client.query(query, [idProject], (error, results) => {
         if (error) {
             console.error("Error al obtener los datos de la tabla:", error);
             res.status(500).json({ error: "Error al obtener los datos" });
             return;
         }
 
-        res.json(results);
+        res.json(results.rows);
     });
 });
 
