@@ -167,9 +167,10 @@ app.post("/api/evaluate", async (req, res) => {
             };
 
             const selectQuery =
-                "SELECT * FROM evaluation WHERE id_project = ? AND id_heuristic = ? AND id_criteria = ?";
+                "SELECT * FROM evaluation WHERE id_project = $1 AND id_heuristic = $2 AND id_criteria = $3";
 
-            const query = "INSERT INTO evaluation SET ?";
+
+            //const query = "INSERT INTO evaluation SET ?";
 
             client.query(
                 selectQuery,
@@ -177,7 +178,7 @@ app.post("/api/evaluate", async (req, res) => {
                 (error, results) => {
                     if (error) {
                         console.error(
-                            "Error al verificar los |datos existentes:",
+                            "Error al verificar los datos existentes:",
                             error
                         );
                         return;
