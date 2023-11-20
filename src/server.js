@@ -91,9 +91,9 @@ app.post("/api/createProject", async (req, res) => {
     const projectInfo = req.body;
     console.log(projectInfo);
 
-    const query = "INSERT INTO projects (column1, column2, ...) VALUES ($1, $2, ...) RETURNING *";
+    const query = "INSERT INTO projects SET ?";
 
-    client.query(query, [projectInfo.column1, projectInfo.column2, ...], (error, results) => {
+    client.query(query, [projectInfo], (error, results) => {
         if (error) {
             console.error("Error al insertar los datos de la tabla:", error);
             res.status(500).json({ error: "Error al insertar los datos" });
