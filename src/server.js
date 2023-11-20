@@ -88,20 +88,27 @@ app.get("/api/projects/:id", async (req, res) => {
 });
 
 app.post("/api/createProject", async (req, res) => {
-    const projectInfo = req.body;
-    console.log(projectInfo);
+    const { description, url, id_coordinator, id_evaluator } = req.body;
 
-    const query = "INSERT INTO projects SET ?";
+    const query =
+        "INSERT INTO projects (description, url, id_coordinator, id_evaluator) VALUES ($1, $2, $3, $4) RETURNING *";
 
-    client.query(query, [projectInfo], (error, results) => {
-        if (error) {
-            console.error("Error al insertar los datos de la tabla:", error);
-            res.status(500).json({ error: "Error al insertar los datos" });
-            return;
+    client.query(
+        query,
+        [description, url, id_coordinator, id_evaluator],
+        (error, results) => {
+            if (error) {
+                console.error(
+                    "Error al insertar los datos de la tabla:",
+                    error
+                );
+                res.status(500).json({ error: "Error al insertar los datos" });
+                return;
+            }
+
+            res.json(results.rows);
         }
-
-        res.json(results.rows);
-    });
+    );
 });
 
 
