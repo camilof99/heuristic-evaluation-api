@@ -166,11 +166,15 @@ app.post("/api/evaluate", async (req, res) => {
                 id_criteria: key,
             };
 
+            console.log('====================================');
+            console.log(datos);
+            console.log('====================================');
+
             const selectQuery =
                 "SELECT * FROM evaluation WHERE id_project = $1 AND id_heuristic = $2 AND id_criteria = $3";
 
 
-            //const query = "INSERT INTO evaluation SET ?";
+            const query = "INSERT INTO evaluation SET ?";
 
             client.query(
                 selectQuery,
@@ -191,7 +195,10 @@ app.post("/api/evaluate", async (req, res) => {
                         return;
                     }
 
-                    const insertQuery = "INSERT INTO evaluation SET ?";
+                    //const insertQuery = "INSERT INTO evaluation SET ?";
+                    const insertQuery =
+                        "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1)";
+
                     client.query(insertQuery, datos, (error, results) => {
                         if (error) {
                             console.error(
