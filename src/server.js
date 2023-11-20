@@ -38,16 +38,16 @@ app.post("/api/login", async (req, res) => {
         console.log("====================================");
 
         const query_sql =
-            "SELECT email, password FROM users WHERE email = ? AND password = ?";
+            "SELECT email, password FROM users WHERE email = $1 AND password = $2";
 
-        connection.query(query_sql, [email, password], (error, results) => {
+        client.query(query_sql, [email, password], (error, results) => {
             if (error) {
                 console.error("Error en la consulta: ", error);
                 res.status(500).send("Error interno del servidor.");
-            } else if (results.length === 0) {
+            } else if (results.rows.length === 0) {
                 res.status(401).send("Credenciales inválidas.");
             } else {
-                const user = results[0];
+                const user = results.rows[0];
                 const token = jwt.sign({ id: user.id }, "mysecretkey");
                 res.send({ token });
             }
