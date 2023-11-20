@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const mysql = require("mysql2");
+const { Client } = require("pg");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
@@ -8,15 +8,18 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const connection = mysql.createConnection({
-    host: "34.133.192.54",
-    user: "root",
-    password: "@cafaza9906",
-    database: "heuristic_evaluation_bd",
-    connectTimeout: 10000,
+const client = new Client({
+    user: "fl0user",
+    host: "ep-lively-bonus-25427090.us-east-2.aws.neon.fl0.io",
+    database: "heuristic-evaluation-db",
+    password: "TcWEFGV7p9Cz",
+    port: 5432,
+    ssl: {
+        rejectUnauthorized: false, // Opción para evitar errores de "self signed certificate" en desarrollo (NO utilizar en producción)
+    },
 });
 
-connection.connect((error) => {
+client.connect((error) => {
     if (error) {
         console.error("Error de conexión: ", error);
     } else {
@@ -87,7 +90,7 @@ app.get("/api/projects/:id", async (req, res) => {
 app.post("/api/createProject", async (req, res) => {
     const projectInfo = req.body;
     console.log(projectInfo);
-    
+
     const query = "INSERT INTO projects SET ?";
 
     connection.query(query, [projectInfo], (error, results) => {
@@ -168,11 +171,7 @@ app.post("/api/evaluate", async (req, res) => {
 
             connection.query(
                 selectQuery,
-                [
-                    datos.id_project,
-                    datos.id_heuristic,
-                    datos.id_criteria,
-                ],
+                [datos.id_project, datos.id_heuristic, datos.id_criteria],
                 (error, results) => {
                     if (error) {
                         console.error(
