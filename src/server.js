@@ -197,18 +197,28 @@ app.post("/api/evaluate", async (req, res) => {
 
                     //const insertQuery = "INSERT INTO evaluation SET ?";
                     const insertQuery =
-                        "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1)";
+                        "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1, $2, $3, $4)";
 
-                    client.query(insertQuery, datos, (error, results) => {
-                        if (error) {
-                            console.error(
-                                "Error al insertar los datos:",
-                                error
-                            );
-                        } else {
-                            console.log("Datos insertados correctamente.");
+                    client.query(
+                        insertQuery,
+                        [
+                            datos.valoration,
+                            datos.id_project,
+                            datos.id_heuristic,
+                            datos.id_criteria,
+                        ],
+                        (error, results) => {
+                            if (error) {
+                                console.error(
+                                    "Error al insertar los datos:",
+                                    error
+                                );
+                            } else {
+                                console.log("Datos insertados correctamente.");
+                            }
                         }
-                    });
+                    );
+
                 }
             );
         }
