@@ -112,7 +112,6 @@ app.post("/api/createProject", async (req, res) => {
     );
 });
 
-
 app.get("/api/coordinators", async (req, res) => {
     const query = "SELECT * FROM users WHERE rol = 'coordinator'";
 
@@ -141,7 +140,6 @@ app.get("/api/evaluators", async (req, res) => {
     });
 });
 
-
 app.get("/api/heuristics", async (req, res) => {
     const query =
         "SELECT c.*, h.description AS heuristic FROM criteria c JOIN heuristics h ON c.id_heuristic = h.id";
@@ -156,7 +154,6 @@ app.get("/api/heuristics", async (req, res) => {
         res.json(results.rows);
     });
 });
-
 
 app.post("/api/evaluate", async (req, res) => {
     const { ratings, idProject } = req.body;
@@ -174,15 +171,12 @@ app.post("/api/evaluate", async (req, res) => {
                 id_criteria: key,
             };
 
-            console.log('====================================');
+            console.log("====================================");
             console.log(datos);
-            console.log('====================================');
+            console.log("====================================");
 
             const selectQuery =
                 "SELECT * FROM evaluation WHERE id_project = $1 AND id_heuristic = $2 AND id_criteria = $3";
-
-
-            const query = "INSERT INTO evaluation SET ?";
 
             client.query(
                 selectQuery,
@@ -196,15 +190,14 @@ app.post("/api/evaluate", async (req, res) => {
                         return;
                     }
 
-                    if (results.length > 0) {
+                    if (results.rows.length > 0) {
                         console.log(
                             "Ya existe un registro con los mismos valores."
                         );
                         return;
                     }
 
-                    //const insertQuery = "INSERT INTO evaluation SET ?";
-                    const insertQuery =
+                    /* const insertQuery =
                         "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1, $2, $3, $4)";
 
                     client.query(
@@ -225,14 +218,12 @@ app.post("/api/evaluate", async (req, res) => {
                                 console.log("Datos insertados correctamente.");
                             }
                         }
-                    );
-
+                    ); */
                 }
             );
         }
     }
 });
-
 
 app.get("/api/evaluationresults/:idProject", async (req, res) => {
     const idProject = req.params.idProject;
