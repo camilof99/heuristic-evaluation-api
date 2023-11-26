@@ -197,7 +197,7 @@ app.post("/api/evaluate", async (req, res) => {
                         return;
                     }
 
-                    /* const insertQuery =
+                    const insertQuery =
                         "INSERT INTO evaluation (valoration, id_project, id_heuristic, id_criteria) VALUES ($1, $2, $3, $4)";
 
                     client.query(
@@ -218,7 +218,7 @@ app.post("/api/evaluate", async (req, res) => {
                                 console.log("Datos insertados correctamente.");
                             }
                         }
-                    ); */
+                    );
                 }
             );
         }
