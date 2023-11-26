@@ -59,7 +59,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.get("/api/projects", async (req, res) => {
-    const query = "SELECT * FROM projects";
+    const query = "SELECT projects.*, evaluator.name AS evaluator_name, coordinator.name AS coordinator_name FROM projects LEFT JOIN users AS evaluator ON projects.id_evaluator = evaluator.id LEFT JOIN users AS coordinator ON projects.id_coordinator = coordinator.id";
 
     client.query(query, (error, results) => {
         if (error) {
