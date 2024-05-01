@@ -227,16 +227,55 @@ app.post("/api/evaluate", async (req, res) => {
 
 app.get("/api/evaluationresults/:idProject", async (req, res) => {
     const idProject = req.params.idProject;
-    const query = "SELECT * FROM evaluation WHERE id_project = $1";
 
-    client.query(query, [idProject], (error, results) => {
-        if (error) {
-            console.error("Error al obtener los datos de la tabla:", error);
-            res.status(500).json({ error: "Error al obtener los datos" });
+    // Consulta para obtener la URL del proyecto
+    const projectQuery = "SELECT url FROM projects WHERE id = $1";
+
+    client.query(projectQuery, [idProject], (projectError, projectResults) => {
+        if (projectError) {
+            console.error(
+                "Error al obtener la URL del proyecto:",
+                projectError
+            );
+            res.status(500).json({
+                error: "Error al obtener los datos del proyecto",
+            });
             return;
         }
 
-        res.json(results.rows);
+        if (projectResults.rows.length === 0) {
+            res.status(404).json({ error: "Proyecto no encontrado" });
+            return;
+        }
+
+        const projectUrl = projectResults.rows[0].url;
+
+        // Consulta para obtener los resultados de las evaluaciones
+        const evaluationQuery = `
+            SELECT e.*
+            FROM evaluation e
+            INNER JOIN projects p ON e.id_project = p.id
+            WHERE p.url = $1
+        `;
+
+        client.query(
+            evaluationQuery,
+            [projectUrl],
+            (evaluationError, evaluationResults) => {
+                if (evaluationError) {
+                    console.error(
+                        "Error al obtener los datos de evaluación:",
+                        evaluationError
+                    );
+                    res.status(500).json({
+                        error: "Error al obtener los datos de evaluación",
+                    });
+                    return;
+                }
+
+                res.json(evaluationResults.rows);
+            }
+        );
     });
 });
 
