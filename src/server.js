@@ -9,11 +9,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const client = new Client({
-    user: "fl0user",
-    host: "ep-lively-bonus-25427090.us-east-2.aws.neon.fl0.io",
-    database: "heuristic-evaluation-db",
-    password: "TcWEFGV7p9Cz",
-    port: 5432,
+    user: "postgres",
+    host: "roundhouse.proxy.rlwy.net",
+    database: "railway",
+    password: "wApndRvNtJeUdSedOadiWYAjIItYkvgo",
+    port: 59439,
     ssl: {
         rejectUnauthorized: false, // Opción para evitar errores de "self signed certificate" en desarrollo (NO utilizar en producción)
     },
