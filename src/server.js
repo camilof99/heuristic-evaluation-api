@@ -252,9 +252,10 @@ app.get("/api/evaluationresults/:idProject", async (req, res) => {
 
         // Consulta para obtener los resultados de las evaluaciones
         const evaluationQuery = `
-            SELECT e.*
+            SELECT e.*, c.description
             FROM evaluation e
             INNER JOIN projects p ON e.id_project = p.id
+            INNER JOIN criteria c ON e.id_criteria = c.id
             WHERE p.url = $1
         `;
 
