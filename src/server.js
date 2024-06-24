@@ -280,6 +280,97 @@ app.get("/api/evaluationresults/:idProject", async (req, res) => {
     });
 });
 
+app.get("/api/informationprojects/:idProject", async (req, res) => {
+    const idProject = req.params.idProject;
+
+    // Consulta para obtener la URL del proyecto
+    const projectQuery = "SELECT url FROM projects WHERE id = $1";
+
+    client.query(projectQuery, [idProject], (projectError, projectResults) => {
+        if (projectError) {
+            console.error(
+                "Error al obtener la URL del proyecto:",
+                projectError
+            );
+            res.status(500).json({
+                error: "Error al obtener los datos del proyecto",
+            });
+            return;
+        }
+
+        if (projectResults.rows.length === 0) {
+            res.status(404).json({ error: "Proyecto no encontrado" });
+            return;
+        }
+
+        const projectUrl = projectResults.rows[0].url;
+
+        // Consulta para obtener los resultados de las evaluaciones
+        const evaluationQuery = `
+            WITH ranked_projects AS (
+                SELECT 
+                    p.description,
+                    p.url,
+                    u_coordinator.name AS coordinator_name,
+                    string_agg(u_evaluator.name, ', ') AS evaluators,
+                    ROW_NUMBER() OVER (PARTITION BY p.url ORDER BY LENGTH(p.description) DESC) AS rn
+                FROM 
+                    projects p
+                JOIN 
+                    users u_coordinator ON p.id_coordinator = u_coordinator.id
+                JOIN (
+                    SELECT 
+                        u.id,
+                        u.name
+                    FROM 
+                        users u
+                    JOIN (
+                        SELECT 
+                            unnest(string_to_array(p.id_evaluator::text, ' '))::int AS id
+                        FROM 
+                            projects p
+                        WHERE 
+                            p.url = $1
+                    ) e ON u.id = e.id
+                ) u_evaluator ON true
+                GROUP BY
+                    p.description,
+                    p.url,
+                    u_coordinator.name
+            )
+            SELECT 
+                description,
+                url,
+                coordinator_name,
+                evaluators
+            FROM 
+                ranked_projects
+            WHERE 
+                url = $1
+                AND rn = 1;
+        `;
+
+        client.query(
+            evaluationQuery,
+            [projectUrl],
+            (evaluationError, evaluationResults) => {
+                if (evaluationError) {
+                    console.error(
+                        "Error al obtener los datos del proyecto:",
+                        evaluationError
+                    );
+                    res.status(500).json({
+                        error: "Error al obtener los datos del proyecto",
+                    });
+                    return;
+                }
+
+                res.json(evaluationResults.rows);
+            }
+        );
+    });
+});
+
 const port = process.env.PORT ?? 8080;
 
 app.listen(port, () => {
